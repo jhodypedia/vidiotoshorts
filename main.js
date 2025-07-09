@@ -19,28 +19,26 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
-// Upload config
+// Multer config
 const storage = multer.diskStorage({
   destination: uploadDir,
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage });
 
-// SPA View
+// SPA page
 app.get('/', (req, res) => {
   res.render('index');
 });
 
-// API: Get all output videos
-app.get('/api/videos', (req, res) => {
-  const files = fs.readdirSync(outputDir).filter(f => f.endsWith('.mp4'));
-  res.json(files);
-});
-
-// API: Cut video
+// API: Proses video
 app.post('/api/cut', upload.single('video'), (req, res) => {
   const episodes = parseInt(req.body.episodes || 10);
   const inputPath = path.join(uploadDir, req.file.filename);
+  const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+  const userFolder = path.join(outputDir, id);
+
+  fs.mkdirSync(userFolder);
 
   ffmpeg.ffprobe(inputPath, (err, metadata) => {
     if (err) return res.status(500).json({ error: 'Metadata error' });
@@ -50,7 +48,7 @@ app.post('/api/cut', upload.single('video'), (req, res) => {
     let finished = 0;
 
     for (let i = 0; i < episodes; i++) {
-      const outputFile = path.join(outputDir, `short_part_${Date.now()}_${i + 1}.mp4`);
+      const outputFile = path.join(userFolder, `part_${i + 1}.mp4`);
       const start = i * perPart;
 
       ffmpeg(inputPath)
@@ -60,7 +58,8 @@ app.post('/api/cut', upload.single('video'), (req, res) => {
         .on('end', () => {
           finished++;
           if (finished === episodes) {
-            res.json({ success: true });
+            res.json({ success: true, id });
+            scheduleAutoDelete(userFolder); // Auto delete after 1h
           }
         })
         .on('error', e => console.error(e.message))
@@ -69,18 +68,39 @@ app.post('/api/cut', upload.single('video'), (req, res) => {
   });
 });
 
-// API: Download ZIP
-app.get('/api/download-all', (req, res) => {
-  const archive = archiver('zip', { zlib: { level: 9 } });
-  res.attachment('shorts.zip');
+// API: Ambil hasil video berdasarkan ID
+app.get('/api/videos/:id', (req, res) => {
+  const folder = path.join(outputDir, req.params.id);
+  if (!fs.existsSync(folder)) return res.json([]);
+  const files = fs.readdirSync(folder).filter(f => f.endsWith('.mp4'));
+  res.json(files.map(f => `/output/${req.params.id}/${f}`));
+});
 
+// API: Download ZIP hasil user
+app.get('/api/download-all/:id', (req, res) => {
+  const folder = path.join(outputDir, req.params.id);
+  if (!fs.existsSync(folder)) return res.status(404).send('Not found');
+
+  const archive = archiver('zip', { zlib: { level: 9 } });
+  res.attachment(`shorts_${req.params.id}.zip`);
   archive.pipe(res);
-  fs.readdirSync(outputDir).forEach(file => {
-    archive.file(path.join(outputDir, file), { name: file });
+
+  fs.readdirSync(folder).forEach(file => {
+    archive.file(path.join(folder, file), { name: file });
   });
   archive.finalize();
 });
 
+// ⏱️ Auto delete folder setelah 1 jam
+function scheduleAutoDelete(folderPath, delayMs = 3600000) {
+  setTimeout(() => {
+    if (fs.existsSync(folderPath)) {
+      fs.rmSync(folderPath, { recursive: true, force: true });
+      console.log(`🗑️ Folder "${folderPath}" dihapus otomatis setelah 1 jam`);
+    }
+  }, delayMs);
+}
+
 app.listen(port, () => {
-  console.log(`✅ Server running: http://localhost:${port}`);
+  console.log(`✅ Server running at http://localhost:${port}`);
 });
