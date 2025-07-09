@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Auto Shorts Generator: Potong video panjang jadi beberapa bagian otomatis, cepat & mudah!" />
+  <meta name="keywords" content="shorts generator, potong video, tiktok, youtube shorts" />
+  <meta name="author" content="AutoShorts AI" />
+  <title>Auto Shorts Generator - Potong Video Otomatis</title>
+
+  <!-- Fonts & UI -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="py-4 text-center bg-primary text-white shadow-sm">
+    <div class="container">
+      <h1 class="fw-bold mb-1"><i class="fa-solid fa-scissors me-2"></i>Auto Shorts Generator</h1>
+      <p class="mb-0">Potong video panjang jadi beberapa bagian otomatis untuk Shorts / TikTok / Reels</p>
+    </div>
+  </header>
+
+  <main class="container py-5">
+    <section id="uploadSection">
+      <form id="uploadForm" class="bg-light p-4 rounded shadow-sm">
+        <div class="mb-3">
+          <label for="video" class="form-label">File Video (MP4)</label>
+          <input type="file" name="video" id="video" class="form-control" accept="video/mp4" required />
+        </div>
+        <div class="mb-3">
+          <label for="episodes" class="form-label">Jumlah Episode</label>
+          <input type="number" name="episodes" id="episodes" class="form-control" value="10" min="1" max="100" />
+        </div>
+        <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-cut me-2"></i>Potong Sekarang</button>
+      </form>
+    </section>
+
+    <div class="progress my-4 d-none" id="progressBox">
+      <div class="progress-bar progress-bar-striped progress-bar-animated w-100">Memproses video...</div>
+    </div>
+
+    <section id="downloadContainer" class="mb-4 d-none">
+      <a href="#" class="btn btn-success">
+        <i class="fa-solid fa-download me-2"></i>Unduh Semua Shorts (.zip)
+      </a>
+    </section>
+
+    <section id="resultSection" class="pt-4">
+      <h2 class="h5 fw-semibold mb-3"><i class="fa fa-video me-2"></i>Hasil Video Shorts</h2>
+      <div id="videoGrid" class="row d-none d-md-flex"></div>
+      <div id="videoSlider" class="d-md-none d-flex overflow-auto gap-3 pb-3"></div>
+    </section>
+  </main>
+
+  <footer class="text-center py-4 small text-muted">
+    &copy; <span id="year"></span> Auto Shorts Generator • Dibuat dengan ❤️
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
